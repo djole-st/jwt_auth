@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var User = require('../models/user');
+var jwt = require('jsonwebtoken');
 
 router.post('/register', function(req,res,next){
   var new_user = new User({
@@ -21,5 +22,54 @@ router.post('/register', function(req,res,next){
   })
 
 });
+
+router.post('/login', function(req,res,next){
+  let promise = User.findOne({email:req.body.email}).exec();
+
+  promise.then(function(doc){
+   if(doc) {
+     if(doc.isValid(req.body.password)){
+         // generate token
+         let token = jwt.sign({username:doc.username},'secret', {expiresIn : '3h'});
+
+         return res.status(200).json(token);
+
+     } else {
+       return res.status(501).json({message:' Invalid Credentials'});
+     }
+   }
+   else {
+     return res.status(501).json({message:'User email is not registered.'})
+   }
+  });
+
+  promise.catch(function(err){
+    return res.status(501).json({message:'Some internal error'});
+  })
+})
+
+var decodedToken = '';
+
+router.get('/username', tokenValidation, function(req, res, next){
+  return res.status(200).json(decodedToken.username);
+})
+
+// token verification middleware
+function tokenValidation(req, res, next){
+  let token = req.query.token;
+
+  jwt.verify(token, 'secret', function(err, tokendata){
+    if(err)
+    {
+      return res.status(400).json({message:'Unauthorised request'});
+    }
+    if(tokendata)
+    {
+      decodedToken = tokendata;
+      next();
+    }
+  });
+
+}
 
 module.exports = router;

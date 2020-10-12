@@ -59,7 +59,8 @@ export class RegisterComponent implements OnInit {
   }
 
   movetologin(): void {
-    this.router.navigate(['../login'], { relativeTo: this.activatedRoute });
+    console.log(this.router.url);
+    this.router.navigate(['../main/login'], { relativeTo: this.activatedRoute });
   }
 
   ngOnInit(): void {
